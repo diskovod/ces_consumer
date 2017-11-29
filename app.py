@@ -1,12 +1,20 @@
 from flask import Flask, render_template, request, json, session, redirect
-from flask.ext.mysql import MySQL
+from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
+from functools import wraps
+from model import ConsumerExtension as consumer_extension
+
+from flask_restful import Resource, Api
+from flask_restful import reqparse
 
 
 app = Flask(__name__)
 app.debug = True
 mysql = MySQL()
 app.secret_key = 'why would I tell you my secret key?'
+api = Api(app)
+
+
 
 # MySQL configurations
 app.config['MYSQL_DATABASE_USER'] = 'root'
@@ -15,9 +23,98 @@ app.config['MYSQL_DATABASE_DB'] = 'Consumer'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
 
+class AddHost(Resource):
+    def post(self):
+        try:
+            # Parse the arguments
+            parser = reqparse.RequestParser()
+            parser.add_argument('hostname', type=str)
+            parser.add_argument('dc', type=str)
+            args = parser.parse_args()
+
+            _hostname = args['hostname']
+            _dc = args['dc']
+
+            # print _hostname, _dc
+
+            conn = mysql.connect()
+            cursor = conn.cursor()
+            cursor.callproc('sp_CreateNewHost',(_hostname,_dc))
+            data = cursor.fetchall()
+
+            conn.commit()
+            return {'StatusCode':'200','Message': 'Success'}
+
+        except Exception as e:
+            return {'API error': str(e)}
+
+class GetHosts(Resource):
+    def post(self):
+        try:
+            # Parse the arguments
+            # parser = reqparse.RequestParser()
+            # parser.add_argument('hostname', type=str)
+            # parser.add_argument('dc', type=str)
+            # args = parser.parse_args()
+
+            # _hostname = args['hostname']
+            # _dc = args['dc']
+
+            # print _hostname, _dc
+
+            conn = mysql.connect()
+            cursor = conn.cursor()
+            cursor.callproc('sp_CreateNewHost',(_hostname,_dc))
+            data = cursor.fetchall()
+
+            conn.commit()
+            return {'StatusCode':'200','Message': 'Success'}
+
+        except Exception as e:
+            return {'API error': str(e)}
+
+class UpdateHost(Resource):
+    def post(self):
+        try:
+            # Parse the arguments
+            parser = reqparse.RequestParser()
+            parser.add_argument('hostname', type=str)
+            parser.add_argument('dc', type=str)
+            args = parser.parse_args()
+
+            _hostname = args['hostname']
+            _dc = args['dc']
+
+            # print _hostname, _dc
+
+            conn = mysql.connect()
+            cursor = conn.cursor()
+            cursor.callproc('sp_CreateNewHost',(_hostname,_dc))
+            data = cursor.fetchall()
+
+            conn.commit()
+            return {'StatusCode':'200','Message': 'Success'}
+
+        except Exception as e:
+            return {'API error': str(e)}
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('user') is None:
+            return redirect('/showSignin')
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route("/")
+@login_required
 def main():
-    return render_template('index1.html')
+    return redirect('/userHome')
+    # if session.get('user'):
+    #     return redirect('/userHome')
+    # else:
+    #     return redirect('/showSignin')
 
 @app.route('/showSignUp')
 def showSignUp():
@@ -58,20 +155,23 @@ def validateLogin():
         con.close()
 
 @app.route('/userHome')
+@login_required
 def userHome():
-    if session.get('user'):
-        hosts_dict = {}
-        con = mysql.connect()
-        cursor = con.cursor()
-        cursor.execute("Select * from tbl_hosts")
-        hosts = cursor.fetchall()
+    # if session.get('user'):
+    hosts_dict = {}
+    con = mysql.connect()
+    cursor = con.cursor()
+    cursor.execute("Select * from tbl_hosts")
+    hosts = cursor.fetchall()
+    cursor.execute("Select * from tbl_failed_hosts")
+    failed_hosts = cursor.fetchall()
         #
         # for host in hosts:
         #     hosts_dict.update({"hostname:": host[1], "dc": host[2], "created_date": host[3]})
 
-        return render_template('index1.html', all_hosts = hosts)
-    else:
-        return render_template('error.html', error='Unauthorized Access')
+    return render_template('index.html', all_hosts = hosts, failed_hosts = failed_hosts)
+    # else:
+    #     return render_template('error.html', error='Unauthorized Access')
 
 @app.route('/logout')
 def logout():
@@ -93,7 +193,6 @@ def signUp():
             conn = mysql.connect()
             cursor = conn.cursor()
             _hashed_password = generate_password_hash(_password)
-            print'message', _hashed_password
             cursor.callproc('sp_createUser', (_name, _email, _hashed_password))
             data = cursor.fetchall()
 
@@ -111,6 +210,8 @@ def signUp():
         cursor.close()
         conn.close()
 
+
+api.add_resource(AddHost, '/AddHost')
 
 if __name__ == "__main__":
     app.run()
