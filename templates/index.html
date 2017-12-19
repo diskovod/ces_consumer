@@ -125,34 +125,40 @@
 
 				  			</div>
 				  			<div class="content-box-large box-with-header">
-                            <style>
-                                   tr[title]:hover:after {
-                                          content: attr(title);
-                                          padding: 4px 8px;
-                                          color: #333;
-                                          position: absolute;
-                                          left: 0;
-                                          top: 100%;
-                                          white-space: nowrap;
-{#                                          z-index: 20px;#}
-                                          -moz-border-radius: 5px;
-                                          -webkit-border-radius: 5px;
-                                          border-radius: 5px;
-                                          -moz-box-shadow: 0px 0px 4px #222;
-                                          -webkit-box-shadow: 0px 0px 4px #222;
-                                          box-shadow: 0px 0px 4px #222;
-                                          background-image: -moz-linear-gradient(top, #eeeeee, #cccccc);
-                                          background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #eeeeee),color-stop(1, #cccccc));
-                                          background-image: -webkit-linear-gradient(top, #eeeeee, #cccccc);
-                                          background-image: -moz-linear-gradient(top, #eeeeee, #cccccc);
-                                          background-image: -ms-linear-gradient(top, #eeeeee, #cccccc);
-                                          background-image: -o-linear-gradient(top, #eeeeee, #cccccc);
-                                        }
-                            </style>
+
                                 <table>
+
+
                                         {% for host in failed_hosts %}
+                                            <script type="text/javascript">
+                                                function show(zero_host_id, aa_host_id){
+{#                                                    alert(zero_host_id.id)#}
+                                                    document.getElementById(zero_host_id.id).style.display = "inline-block";
+                                                    document.getElementById(aa_host_id.id).style.display = "inline-block";
+                                                    }
+
+                                                function hide(zero_host_id, aa_host_id) {
+                                                    document.getElementById(zero_host_id.id).style.display = "none";
+                                                    document.getElementById(aa_host_id.id).style.display = "none";
+                                        }
+                                            </script>
                                             <tr>
-                                                <th> Hostname</th> <th> DC</th> <th> Reason</th>
+                                                  <div class="zero_test" id=zero_{{ host[0] }} style="display:none"></div>
+                                                  <div id=text><a href=# target=_self onClick="show(zero_{{ host[0]}}, aa_{{ host[0] }})" class=left>{{ host[1] }} </a>
+                                                      <div style="margin: 20%">DC: {{ host[2] }}</div>
+                                                  </div>
+
+
+
+                                                  <div class="aa_test" id=aa_{{ host[0] }} style="display:none">
+                                                    <a href=# target_self onClick="hide(zero_{{ host[0] }}, aa_{{ host[0] }})" class=right>x</a>
+
+                                                        <p>{{ host [4] }}</p>
+                                                    </div>
+{#                                                  <a href=# target=_self onclick="return confirm({{ host[4] }});">{{ host[1] }}</a>#}
+{#                                                <input type="checkbox" id="text"><label for="text" data-title="{{ host[4] }}"> Hostname: {{ host[1] }}</label></th>#}
+
+{#                                                <th> DC</th> <th> Reason</th>#}
 {#                                                <th> DC: {{ host[2] }} </th>#}
 {#                                                <th> Reason: {{ host[4] }} </th>#}
                                             </tr>
